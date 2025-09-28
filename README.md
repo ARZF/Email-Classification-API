@@ -17,7 +17,7 @@ A FastAPI application that classifies emails into different categories (Support,
 ## Screenshots
 
 ### Home Page
-![Home Page](screenshots\Home_page.JPG)
+![Home Page](screenshots/Home_page.JPG)
 
 ### Results Page
 ![Results Page](screenshots/results.png)
