@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classification Results - Email Classification</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .result-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+        .category-support { background: linear-gradient(45deg, #17a2b8, #138496); }
+        .category-marketing { background: linear-gradient(45deg, #ffc107, #fd7e14); }
+        .category-corporate { background: linear-gradient(45deg, #6f42c1, #e83e8c); }
+        .category-spam { background: linear-gradient(45deg, #dc3545, #fd7e14); }
+        .confidence-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #e9ecef;
+            overflow: hidden;
+        }
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .category-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="main-container p-5">
+                    <div class="text-center mb-5">
+                        <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                        <h1 class="display-5 fw-bold text-primary">Classification Results</h1>
+                        <a href="/" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Classify Another Email
+                        </a>
+                    </div>
+
+                    <!-- Main Classification Result -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="result-card card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-tags me-2"></i>Email Category
+                                    </h5>
+                                    <div class="mb-3">
+                                        {% set category_icons = {
+                                            'support': 'headset',
+                                            'marketing': 'bullhorn', 
+                                            'corporate': 'briefcase',
+                                            'spam': 'exclamation-triangle'
+                                        } %}
+                                        {% set category_colors = {
+                                            'support': 'text-info',
+                                            'marketing': 'text-warning',
+                                            'corporate': 'text-primary', 
+                                            'spam': 'text-danger'
+                                        } %}
+                                        <i class="fas fa-{{ category_icons.get(result.category.predicted, 'question') }} category-icon {{ category_colors.get(result.category.predicted, 'text-secondary') }}"></i>
+                                    </div>
+                                    <h2 class="{{ category_colors.get(result.category.predicted, 'text-secondary') }}">{{ result.category.predicted.title() }}</h2>
+                                    <div class="confidence-bar mt-3 mx-auto" style="max-width: 300px;">
+                                        <div class="confidence-fill bg-primary" 
+                                             style="width: {{ (result.category.confidence * 100)|round }}%"></div>
+                                    </div>
+                                    <p class="mt-2 text-muted">Confidence: {{ (result.category.confidence * 100)|round }}%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spam Detection -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="result-card card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-shield-alt me-2"></i>Spam Detection
+                                    </h5>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                {% if result.is_spam %}
+                                                    <i class="fas fa-exclamation-triangle fa-3x text-danger"></i>
+                                                    <h3 class="text-danger">Potential Spam</h3>
+                                                {% else %}
+                                                    <i class="fas fa-check-circle fa-3x text-success"></i>
+                                                    <h3 class="text-success">Legitimate Email</h3>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="confidence-bar mt-3">
+                                                <div class="confidence-fill {{ 'bg-danger' if result.is_spam else 'bg-success' }}" 
+                                                     style="width: {{ (result.spam_score * 100)|round }}%"></div>
+                                            </div>
+                                            <p class="mt-2 text-muted">Spam Score: {{ (result.spam_score * 100)|round }}%</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Category Scores -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="result-card card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-chart-pie me-2"></i>Detailed Category Scores
+                                    </h5>
+                                    <div class="row">
+                                        {% for category, score in result.category.all_scores.items() %}
+                                        <div class="col-md-3 mb-3">
+                                            <div class="text-center">
+                                                {% set category_colors = {
+                                                    'support': 'info',
+                                                    'marketing': 'warning',
+                                                    'corporate': 'primary',
+                                                    'spam': 'danger'
+                                                } %}
+                                                <h6 class="text-muted">{{ category.title() }}</h6>
+                                                <div class="confidence-bar">
+                                                    <div class="confidence-fill bg-{{ category_colors.get(category, 'secondary') }}" 
+                                                         style="width: {{ (score * 100)|round }}%"></div>
+                                                </div>
+                                                <small class="text-muted">{{ (score * 100)|round }}%</small>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email Info -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="result-card card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-info-circle me-2"></i>Email Information
+                                    </h5>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-2">
+                                                <strong>Text Length:</strong> {{ result.text_length }} characters
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-2">
+                                                <strong>Method:</strong> {{ result.method.title() }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Animate confidence bars
+        document.addEventListener('DOMContentLoaded', function() {
+            const confidenceBars = document.querySelectorAll('.confidence-fill');
+            confidenceBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>
