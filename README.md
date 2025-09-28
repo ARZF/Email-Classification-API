@@ -20,7 +20,7 @@ A FastAPI application that classifies emails into different categories (Support,
 ![Home Page](screenshots/Home_page.JPG)
 
 ### Results Page
-![Results Page](screenshots/results.png)
+![Results Page](screenshots/Result_page.JPG)
 
 ## Installation
 
